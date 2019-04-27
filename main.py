@@ -1,4 +1,3 @@
-import backgammon
+import affichage
 
-monJeu = backgammon.Backgammon()
-monJeu.jouer()
+monEcranDeDemarrage = affichage.Lanceur()
