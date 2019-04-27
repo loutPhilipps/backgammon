@@ -12,24 +12,20 @@ class Lanceur:
         self.base.title("Backgammon")
         self.boutonLancer = tk.Button(
             self.base, text="Lancer le jeu !", command=self.lancerJeu)
+        self.checkBoxPari = tk.Checkbutton(self.base)
+        self.checkBoxPari.pack()
         self.boutonLancer.pack()
+        self.score = [0, 0]
         self.base.mainloop()
 
     def lancerJeu(self):
+        """Lance des parties tant qu'on ne quitte pas"""
         self.base.destroy()
-        self.jeu = BackgammonGraphique()
+        bg.Backgammon(self)
 
+    def vainqueur(self, champion, valeurPartie):
+        """Ajoute le score de la partie au vainqueur"""
+        self.score[champion] += valeurPartie
 
-class BackgammonGraphique:
-    def __init__(self):
-        self.jeu = bg.Backgammon()
-        self.base = tk.Tk()
-        self.base.title("Mon Backgammon (par Adam Philipps)")
-        self.canvas = tk.Canvas(self.base)
-        self.canvas.pack()
-        self.photo = tk.PhotoImage(file="./plateau.png")
-        self.canvas.create_image(100, 80, image=self.photo)
-        self.boutonQuitter = tk.Button(
-            self.base, text="Quitter", command=self.base.destroy)
-        self.boutonQuitter.pack()
-        self.base.mainloop()
+    def montreScores(self):
+        return self.score

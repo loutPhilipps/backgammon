@@ -18,7 +18,7 @@ Les objectifs du projet étaient les suivants:
 - éventuellement, implémenter certaines règles optionnelles (_paris_ notamment)
 - éventuellement, gestion des _scores_ (plusieurs parties)
 
-## Participants du projet
+## Participants au projet
 
 - Adam PHILIPPS
 

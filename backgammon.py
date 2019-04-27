@@ -7,15 +7,37 @@
 # - blancs: 0, sort en 0
 
 import random
+import tkinter as tk
 
 
 class Backgammon:
-    def __init__(self):
+    def __init__(self, tableauScore):
         """Création d'un jeu de backgammon"""
         self.jeu = [[] for i in range(24)]
         self.remplirInitial()
         self.prison = []
         self.prochainJoueur = random.randint(0, 1)
+        # Scores
+        self.valeurPartie = 1
+        self.tableauScore = tableauScore
+        # Attributs Tkinter
+        self.base = tk.Tk()
+        self.base.title("Mon Backgammon (par Adam Philipps)")
+        self.canvas = tk.Canvas(self.base)
+        self.canvas.pack()
+        self.photo = tk.PhotoImage(file="./plateau.png")
+        self.canvas.create_image(100, 80, image=self.photo)
+        self.boutonSauvegarder = tk.Button(
+            self.base, text="Sauvegarder", command=self.sauvegarder)
+        self.boutonQuitter = tk.Button(
+            self.base, text="Quitter", command=self.base.destroy)
+        self.boutonSauvegarder.pack()
+        self.boutonQuitter.pack()
+        self.base.mainloop()
+
+    def sauvegarder(self):
+        """Sauvegarde la partie"""
+        print("Sauvegardé !")
 
     def remplirInitial(self):
         """Place les pions au départ"""
@@ -182,12 +204,17 @@ class Backgammon:
             print("Vous avez gagne !")
         else:
             print("Fin du tour du joueur {}".format(nomJoueur))
-        if self.prochainJoueur == 0:
-            self.prochainJoueur = 1
-        else:
-            self.prochainJoueur = 0
+            if self.prochainJoueur == 0:
+                self.prochainJoueur = 1
+            else:
+                self.prochainJoueur = 0
+        self.tableauScore.vainqueur(self.prochainJoueur, self.valeurPartie)
 
     def jouer(self):
         """Lance le jeu"""
         while not self.termine():
             self.tour()
+
+
+if __name__ == "__main__":
+    backgammon = Backgammon(tk.Tk())
