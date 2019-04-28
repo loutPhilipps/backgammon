@@ -8,47 +8,62 @@
 
 import random
 import tkinter as tk
+import PIL.ImageTk
+# PIL est une bibliothèque pour gérer les images, qui fonctionne avec Tkinter (qui lui les gère très mal)
+import pickle
 
+def plateauInitial():
+    """Place les pions au départ"""
+    jeu = [[] for i in range(24)]
+    jeu[0] = [1, 1]
+    jeu[5] = [0, 0, 0, 0, 0]
+    jeu[7] = [0, 0, 0]
+    jeu[11] = [1, 1, 1, 1, 1]
+    jeu[12] = [0, 0, 0, 0, 0]
+    jeu[16] = [1, 1, 1]
+    jeu[18] = [1, 1, 1, 1, 1]
+    jeu[23] = [0, 0]
+    return jeu
 
 class Backgammon:
-    def __init__(self, tableauScore):
+    def __init__(self, tableauScore, jeu=plateauInitial(), prison=[], prochainJoueur = random.randint(0, 1)):
         """Création d'un jeu de backgammon"""
-        self.jeu = [[] for i in range(24)]
-        self.remplirInitial()
-        self.prison = []
-        self.prochainJoueur = random.randint(0, 1)
+        self.jeu = jeu
+        self.prison = prison
+        self.prochainJoueur = prochainJoueur
         # Scores
         self.valeurPartie = 1
         self.tableauScore = tableauScore
         # Attributs Tkinter
         self.base = tk.Tk()
         self.base.title("Mon Backgammon (par Adam Philipps)")
-        self.canvas = tk.Canvas(self.base)
-        self.canvas.pack()
-        self.photo = tk.PhotoImage(file="images/plateau.png")
-        self.canvas.create_image(100, 80, image=self.photo)
+        # self.base.wm_iconbitmap("src/images/icone.ico")
+        self.canvas = tk.Canvas(self.base, height = 500, width = 500)
+        self.imagePlateau = PIL.ImageTk.PhotoImage(
+            master=self.base, file="src/images/plateau.png")
+        self.canvas.create_image(0, 0, anchor="nw", image=self.imagePlateau)
         self.boutonSauvegarder = tk.Button(
             self.base, text="Sauvegarder", command=self.sauvegarder)
         self.boutonQuitter = tk.Button(
             self.base, text="Quitter", command=self.base.destroy)
-        self.boutonSauvegarder.pack()
-        self.boutonQuitter.pack()
+        self.canvas.grid()
+        self.boutonSauvegarder.grid()
+        self.boutonQuitter.grid()
         self.base.mainloop()
 
     def sauvegarder(self):
         """Sauvegarde la partie"""
-        print("Sauvegardé !")
+        try:
+            nb = "00"
+            sauvegarde = "sauvegardes/Sauv" + nb
+            fichier = open(sauvegarde, "wb")
+            pickle.dump([self.jeu, self.prison, self.prochainJoueur], fichier)
+            fichier.close()
+            print("Sauvegardé !")
+            return True
+        except:
+            return False
 
-    def remplirInitial(self):
-        """Place les pions au départ"""
-        self.jeu[0] = [1, 1]
-        self.jeu[5] = [0, 0, 0, 0, 0]
-        self.jeu[7] = [0, 0, 0]
-        self.jeu[11] = [1, 1, 1, 1, 1]
-        self.jeu[12] = [0, 0, 0, 0, 0]
-        self.jeu[16] = [1, 1, 1]
-        self.jeu[18] = [1, 1, 1, 1, 1]
-        self.jeu[23] = [0, 0]
 
     def peutSortir(self, joueur):
         """Vérifie si le joueur peut commencer à sortir ses pions du plateau"""
