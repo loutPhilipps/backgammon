@@ -27,7 +27,7 @@ class Lanceur:
         self.boutonCharger = tk.Button(
             self.base, text="Charger une partie", command=self.chargerUnePartie)
         self.boutonQuitter = tk.Button(
-            self.base, text="Quitter", command=self.base.destroy)
+            self.base, text="Quitter", command=self.quitter)
         self.boutonLancer = tk.Button(
             self.base, text="Lancer une partie", command=self.lancerJeu)
         self.scores = tk.Label(
@@ -39,6 +39,11 @@ class Lanceur:
         self.boutonCharger.grid(column=2, row=2, columnspan=2)
         self.texte.grid(column=0, row=1, columnspan=2)
 
+    def quitter(self):
+        """Quitte"""
+        messagebox.showinfo("Bye !", "Au revoir !")
+        self.base.destroy()
+
     def ouvrirRegles(self, evenement):
         webbrowser.open_new(
             r"http://www.jeu-backgammon.net/regles-backgammon.html")
@@ -48,7 +53,7 @@ class Lanceur:
 
     def lancerJeu(self):
         """Lance des parties tant qu'on ne quitte pas"""
-        self.base.destroy()
+        self.base.withdraw()
         bg.Backgammon(self)
 
     def lancerSauvegarde(self):
@@ -57,8 +62,12 @@ class Lanceur:
             messagebox.showwarning(
                 "Charger", "Sélectionnez une partie à charger")
         else:
-            self.fenetreChoix.destroy()
-            self.chargerJeu(self.listeSauvegardes[choix[0]])
+            try:
+                self.chargerJeu(self.listeSauvegardes[choix[0]])
+                self.fenetreChoix.destroy()
+            except:
+                messagebox.showerror(
+                    "Erreur", "Impossible de charger la partie !")
 
     def chargerUnePartie(self):
         self.listeSauvegardes = os.listdir("sauvegardes")
@@ -88,8 +97,3 @@ class Lanceur:
 
     def montreScores(self):
         return self.score
-
-
-if __name__ == "__main__":
-    monLanceur = Lanceur()
-    monLanceur.demarrer()

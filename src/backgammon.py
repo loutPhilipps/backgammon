@@ -1,69 +1,122 @@
 ﻿# -------------------------------------------------------------------------------
 # Projet Backgammon
-# -------------------------------------------------------------------------------
 
 # Conventions :
 # - noirs: 1, sort en 23
 # - blancs: 0, sort en 0
+# -------------------------------------------------------------------------------
 
 import random
 import tkinter as tk
+import tkinter.messagebox as messagebox
 import PIL.ImageTk
-# PIL est une bibliothèque pour gérer les images, qui fonctionne avec Tkinter (qui lui les gère très mal)
+import os
 import pickle
+
 
 def plateauInitial():
     """Place les pions au départ"""
     jeu = [[] for i in range(24)]
-    jeu[0] = [1, 1]
-    jeu[5] = [0, 0, 0, 0, 0]
-    jeu[7] = [0, 0, 0]
-    jeu[11] = [1, 1, 1, 1, 1]
-    jeu[12] = [0, 0, 0, 0, 0]
-    jeu[16] = [1, 1, 1]
-    jeu[18] = [1, 1, 1, 1, 1]
-    jeu[23] = [0, 0]
+    for i in range(24):
+        if i%2 == 0:
+            jeu[i] = [0, 0]
+        else:
+            jeu[i] = [1, 1]
+    # jeu[0] = [1, 1]
+    # jeu[5] = [0, 0, 0, 0, 0]
+    # jeu[7] = [0, 0, 0]
+    # jeu[11] = [1, 1, 1, 1, 1]
+    # jeu[12] = [0, 0, 0, 0, 0]
+    # jeu[16] = [1, 1, 1]
+    # jeu[18] = [1, 1, 1, 1, 1]
+    # jeu[23] = [0, 0]
     return jeu
 
+
 class Backgammon:
-    def __init__(self, tableauScore, jeu=plateauInitial(), prison=[], prochainJoueur = random.randint(0, 1)):
+    def __init__(self, tableauScore, jeu=plateauInitial(), prison=[], prochainJoueur=random.randint(0, 1), valeurPartie=1):
         """Création d'un jeu de backgammon"""
         self.jeu = jeu
         self.prison = prison
         self.prochainJoueur = prochainJoueur
+
+        self.tourTermine = False
+        self.desJoues = [True, True]
+        self.deChoisi = -1
+
         # Scores
-        self.valeurPartie = 1
+        self.valeurPartie = valeurPartie
         self.tableauScore = tableauScore
-        # Attributs Tkinter
+
+        # Objets Tkinter
         self.base = tk.Tk()
         self.base.title("Mon Backgammon (par Adam Philipps)")
-        # self.base.wm_iconbitmap("src/images/icone.ico")
-        self.canvas = tk.Canvas(self.base, height = 500, width = 500)
+        self.base.wm_iconbitmap("src/images/icone.ico")
+        self.imagesDes = [PIL.ImageTk.PhotoImage(
+            master=self.base, file="src/images/des/{}.png".format(i)) for i in range(1, 7)]
+        self.canvasDes = [
+            tk.Canvas(self.base, height=200, width=200) for i in range(2)]
+        for de in range(2):
+            self.canvasDes[de].create_image(
+                0, 0, anchor="nw", image=self.imagesDes[0])
+        self.canvas = tk.Canvas(self.base, height=500, width=500)
         self.imagePlateau = PIL.ImageTk.PhotoImage(
             master=self.base, file="src/images/plateau.png")
         self.canvas.create_image(0, 0, anchor="nw", image=self.imagePlateau)
+        self.boutonReinitialiser = tk.Button(
+            self.base, text="Réinitialiser", command=self.reinit)
         self.boutonSauvegarder = tk.Button(
             self.base, text="Sauvegarder", command=self.sauvegarder)
         self.boutonQuitter = tk.Button(
-            self.base, text="Quitter", command=self.base.destroy)
-        self.canvas.grid()
-        self.boutonSauvegarder.grid()
-        self.boutonQuitter.grid()
+            self.base, text="Quitter", command=self.quitter)
+        scores = self.tableauScore.montreScores()
+        textScores = "Score du joueur blanc : {}\nScore du joueur noir : {}".format(
+            scores[0], scores[1])
+        self.labelScores = tk.Label(
+            self.base, text=str(textScores))
+        self.prisonCanvas = tk.Canvas(self.base, height=100, width=500)
+
+        # Liaison des images (dés, cases) aux événements
+        for i in range(2):
+            self.canvasDes[i].bind("<Button-1>", lambda event: self.choisitDe(event, i))
+
+        # Ajout des éléments à la fenêtre
+        self.canvas.grid(column=0, row=0, rowspan=4)
+        self.canvasDes[0].grid(row=0, column=1)
+        self.canvasDes[1].grid(row=1, column=1)
+        self.prisonCanvas.grid(row=4, column=0, rowspan=3)
+        self.boutonSauvegarder.grid(row=4, column=1)
+        self.boutonReinitialiser.grid(row=5, column=1)
+        self.boutonQuitter.grid(row=6, column=1)
+        self.labelScores.grid(row=2, column=1, rowspan=2)
+
+        # Lancement du jeu
+        self.jouer()
+
+        # Lancement de la fenêtre
         self.base.mainloop()
+
+    def quitter(self):
+        """Quitte la partie et revient au lanceur"""
+        self.base.destroy()
+        self.tableauScore.base.deiconify()
+
+    def reinit(self):
+        """Réinitialiser"""
+        self.base.destroy()
+        self.tableauScore.lancerJeu()
 
     def sauvegarder(self):
         """Sauvegarde la partie"""
         try:
-            nb = "00"
+            nb = str(len(os.listdir("sauvegardes")))
             sauvegarde = "sauvegardes/Sauv" + nb
             fichier = open(sauvegarde, "wb")
             pickle.dump([self.jeu, self.prison, self.prochainJoueur], fichier)
             fichier.close()
-            print("Sauvegardé !")
-            return True
         except:
-            return False
-
+            messagebox.showerror(
+                "Erreur", "Impossible de sauvegarder la partie !")
 
     def peutSortir(self, joueur):
         """Vérifie si le joueur peut commencer à sortir ses pions du plateau"""
@@ -115,11 +168,12 @@ class Backgammon:
                     return False
         return True
 
-    def des(self):
+    def lancerDes(self):
+        """Lance les dés"""
         return (random.randint(1, 6), random.randint(1, 6))
 
     def deplacement(self, joueur, valeurDe, case):
-        """deplacement des pions noir et blancs"""
+        """Déplacement des pions noir et blancs"""
         if joueur == 0:
             if case == -1:
                 # prison
@@ -144,23 +198,24 @@ class Backgammon:
         else:
             self.prison.remove(joueur)
         self.jeu[caseArrive].append(joueur)
+        self.rafraichirAffichage()
 
     def aGagne(self, joueur):
-        """Verifie si le joueur a gagne"""
+        """Vérifie si le joueur a gagné"""
         for case in self.jeu:
             if joueur in case:
                 return False
         return True
 
     def termine(self):
-        """Verifie si le jeu est termine"""
+        """Vérifie si le jeu est terminé"""
         for joueur in range(2):
             if self.aGagne(joueur):
                 return True
         return False
 
     def choisirCase(self, de):
-        """Verifie que le joueur choisit une case jouable"""
+        """Vérifie que le joueur choisit une case jouable"""
         bonneCase = False
         while not bonneCase:
             caseChoisie = input(
@@ -173,63 +228,65 @@ class Backgammon:
                 bonneCase = True
         return int(caseChoisie)
 
-    def choisirDe(self):
-        """Choisir entre 0 et 1"""
-        deChoisi = input("Choisissez votre de (0 ou 1)")
-        while deChoisi not in ["0", "1"]:
-            print("Mauvaise valeur de de")
-            deChoisi = input("Choisissez votre de (0 ou 1)")
-        return int(deChoisi)
+    def choisitCase(self, event, numCase):
+        if self.deChoisi != -1:
+            # Un dé a été sélectionné
+            if not self.verifierDeplacement(self.prochainJoueur, self.des[self.deChoisi], numCase):
+                messagebox.showinfo("Déplacement impossible", "Vous n'avez pas le droit de faire ce déplacement")
+            else:
+                self.deplacement(self.prochainJoueur, self.des[self.deChoisi], numCase)
+                self.desJoues[self.deChoisi] = True
+                self.deChoisi = -1
+
+    def choisitDe(self, event, numDe):
+        if self.deChoisi == -1:
+            self.deChoisi = numDe
 
     def tour(self):
         """Fait le prochain tour"""
+        self.desJoues = [False, False]
         if self.prochainJoueur == 0:
             nomJoueur = "blanc"
         else:
             nomJoueur = "noir"
-        print("Joueur {}, c'est a  vous !".format(nomJoueur))
-        des = self.des()
-        print("Vous avez fait {} et {}".format(des[0], des[1]))
+        messagebox.showinfo("Prochain joueur",
+                            "Joueur {}, c'est à vous !".format(nomJoueur))
+        self.des = self.lancerDes()
+        # AFFICHER LES DES
+        for de in range(2):
+            self.canvasDes[de].create_image(
+                0, 0, anchor="nw", image=self.imagesDes[self.des[de]-1])
         desJouables = [self.deEstJouable(
-            self.prochainJoueur, de) for de in des]
-        if desJouables != [False, False]:
-            # Au moins un de est jouable
-            print("Voici l'etat du jeu :")
-            print(self.jeu, self.prison)
-            deChoisi = self.choisirDe()
-            if desJouables[deChoisi]:
-                caseChoisie = self.choisirCase(des[deChoisi])
-                self.deplacement(self.prochainJoueur,
-                                 des[deChoisi], caseChoisie)
-            else:
-                print("Ce de n'est pas jouable !")
-            if deChoisi == 1:
-                autreDe = 0
-            else:
-                autreDe = 1
-            print("La valeur du de restant est {}".format(des[autreDe]))
-            if desJouables[autreDe]:
-                print(self.jeu, self.prison)
-                caseChoisie = self.choisirCase(des[deChoisi])
-                self.deplacement(self.prochainJoueur,
-                                 des[deChoisi], caseChoisie)
-            else:
-                print("Ce de n'est pas jouable")
-        if self.aGagne(self.prochainJoueur):
-            print("Vous avez gagne !")
+            self.prochainJoueur, de) for de in self.des]
+        if desJouables == [False, False]:
+            # Aucun dé n'est jouable
+            messagebox.showinfo("Désolé !", "Aucun de vos dés n'est jouable !")
+            self.desJoues = [True, True]
         else:
-            print("Fin du tour du joueur {}".format(nomJoueur))
-            if self.prochainJoueur == 0:
-                self.prochainJoueur = 1
-            else:
-                self.prochainJoueur = 0
-        self.tableauScore.vainqueur(self.prochainJoueur, self.valeurPartie)
+            for i in range(2):
+                if not desJouables[i]:
+                    # Si un des deux dés est non jouable, on dit qu'il est déjà joué
+                    self.desJoues[i] = True
+        # Sinon, on attend les events
 
     def jouer(self):
         """Lance le jeu"""
         while not self.termine():
-            self.tour()
+            if self.desJoues == [True, True]:
+                self.tour()
+        # Partie finie
+        for i in range(2):
+            if self.aGagne(i):
+                champion = i
+        if champion == 0:
+            nomJoueur = "blanc"
+        else:
+            nomJoueur = "noir"
+        messagebox.showinfo("Le joueur {} a gagné !".format(nomJoueur))
+        self.tableauScore.vainqueur(champion, self.valeurPartie)
+        self.base.destroy
+        self.tableauScore.base.deiconify()
 
-
-if __name__ == "__main__":
-    backgammon = Backgammon(tk.Tk())
+    def rafraichirAffichage(self):
+        """Recalcule l'affichage des pions"""
+        print("")
