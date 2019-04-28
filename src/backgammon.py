@@ -25,7 +25,7 @@ class Backgammon:
         self.base.title("Mon Backgammon (par Adam Philipps)")
         self.canvas = tk.Canvas(self.base)
         self.canvas.pack()
-        self.photo = tk.PhotoImage(file="./plateau.png")
+        self.photo = tk.PhotoImage(file="images/plateau.png")
         self.canvas.create_image(100, 80, image=self.photo)
         self.boutonSauvegarder = tk.Button(
             self.base, text="Sauvegarder", command=self.sauvegarder)
