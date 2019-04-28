@@ -17,19 +17,14 @@ import pickle
 def plateauInitial():
     """Place les pions au départ"""
     jeu = [[] for i in range(24)]
-    for i in range(24):
-        if i%2 == 0:
-            jeu[i] = [0, 0]
-        else:
-            jeu[i] = [1, 1]
-    # jeu[0] = [1, 1]
-    # jeu[5] = [0, 0, 0, 0, 0]
-    # jeu[7] = [0, 0, 0]
-    # jeu[11] = [1, 1, 1, 1, 1]
-    # jeu[12] = [0, 0, 0, 0, 0]
-    # jeu[16] = [1, 1, 1]
-    # jeu[18] = [1, 1, 1, 1, 1]
-    # jeu[23] = [0, 0]
+    jeu[0] = [1, 1]
+    jeu[5] = [0, 0, 0, 0, 0]
+    jeu[7] = [0, 0, 0]
+    jeu[11] = [1, 1, 1, 1, 1]
+    jeu[12] = [0, 0, 0, 0, 0]
+    jeu[16] = [1, 1, 1]
+    jeu[18] = [1, 1, 1, 1, 1]
+    jeu[23] = [0, 0]
     return jeu
 
 
@@ -78,7 +73,8 @@ class Backgammon:
 
         # Liaison des images (dés, cases) aux événements
         for i in range(2):
-            self.canvasDes[i].bind("<Button-1>", lambda event: self.choisitDe(event, i))
+            self.canvasDes[i].bind(
+                "<Button-1>", lambda event: self.choisitDe(event, i))
 
         # Ajout des éléments à la fenêtre
         self.canvas.grid(column=0, row=0, rowspan=4)
@@ -232,9 +228,11 @@ class Backgammon:
         if self.deChoisi != -1:
             # Un dé a été sélectionné
             if not self.verifierDeplacement(self.prochainJoueur, self.des[self.deChoisi], numCase):
-                messagebox.showinfo("Déplacement impossible", "Vous n'avez pas le droit de faire ce déplacement")
+                messagebox.showinfo(
+                    "Déplacement impossible", "Vous n'avez pas le droit de faire ce déplacement")
             else:
-                self.deplacement(self.prochainJoueur, self.des[self.deChoisi], numCase)
+                self.deplacement(self.prochainJoueur,
+                                 self.des[self.deChoisi], numCase)
                 self.desJoues[self.deChoisi] = True
                 self.deChoisi = -1
 
