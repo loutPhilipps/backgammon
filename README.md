@@ -1,5 +1,10 @@
 # Projet Backgammon - Adam Philipps
 
+## Prérequis
+
+Il vous faut Python 3, ainsi que les modules `tkinter` et `pillow`.
+Vous pouvez installer PIP en lançant `python -m pip install pillow`.
+
 ## Lancer le projet
 
 Vérifiez que vous avez bien python avec tkinter d'installé.
