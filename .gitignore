@@ -1,2 +1,5 @@
 __pycache__
 *.odt
+.vscode
+sauvegardes
+test.py
