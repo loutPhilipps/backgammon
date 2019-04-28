@@ -17,6 +17,7 @@ class Lanceur:
         self.base.configure(background="#534d41")
         self.base.title("Backgammon")
         self.base.wm_iconbitmap("src/images/icone.ico")
+        self.base.protocol('WM_DELETE_WINDOW', self.quitter)
         self.base.rowconfigure(0, weight=1)
         self.base.columnconfigure(0, weight=1)
         self.titre = tk.Label(
@@ -30,11 +31,14 @@ class Lanceur:
             self.base, text="Quitter", command=self.quitter)
         self.boutonLancer = tk.Button(
             self.base, text="Lancer une partie", command=self.lancerJeu)
-        self.scores = tk.Label(
-            self.base, text="Score du joueur blanc: {}\nScore du joueur noir: {}".format(self.score[0], self.score[1]), bg="#534d41", fg="white")
+        self.scoreText = tk.StringVar()
+        self.scoreText.set("Score du joueur blanc: {}\nScore du joueur noir: {}".format(
+            self.score[0], self.score[1]))
+        self.scoresLabel = tk.Label(
+            self.base, textvariable=self.scoreText, bg="#534d41", fg="white")
         self.titre.grid(column=0, row=0, columnspan=4)
         self.boutonQuitter.grid(column=2, row=3, columnspan=2)
-        self.scores.grid(column=0, row=2, columnspan=2, rowspan=2)
+        self.scoresLabel.grid(column=0, row=2, columnspan=2, rowspan=2)
         self.boutonLancer.grid(column=2, row=1, columnspan=2)
         self.boutonCharger.grid(column=2, row=2, columnspan=2)
         self.texte.grid(column=0, row=1, columnspan=2)
@@ -94,6 +98,8 @@ class Lanceur:
     def vainqueur(self, champion, valeurPartie):
         """Ajoute le score de la partie au vainqueur"""
         self.score[champion] += valeurPartie
+        self.scoreText.set("Score du joueur blanc: {}\nScore du joueur noir: {}".format(
+            self.score[0], self.score[1]))
 
     def montreScores(self):
         return self.score

@@ -29,15 +29,19 @@ def plateauInitial():
 
 
 class Backgammon:
-    def __init__(self, tableauScore, jeu=plateauInitial(), prison=[], prochainJoueur=random.randint(0, 1), valeurPartie=1):
+    def __init__(self, tableauScore, jeu=plateauInitial(), prison=[], prochainJoueur=-1, valeurPartie=1):
         """Création d'un jeu de backgammon"""
         self.jeu = jeu
         self.prison = prison
-        self.prochainJoueur = prochainJoueur
+        if prochainJoueur == -1:
+            self.prochainJoueur = random.randint(0, 1)
+        else:
+            self.prochainJoueur = prochainJoueur
 
         self.tourTermine = False
         self.desJoues = [True, True]
         self.deChoisi = -1
+        self.applicationQuittee = False
 
         # Scores
         self.valeurPartie = valeurPartie
@@ -71,10 +75,17 @@ class Backgammon:
             self.base, text=str(textScores))
         self.prisonCanvas = tk.Canvas(self.base, height=100, width=500)
 
+        self.base.protocol('WM_DELETE_WINDOW', self.quitter)
+
         # Liaison des images (dés, cases) aux événements
         for i in range(2):
             self.canvasDes[i].bind(
                 "<Button-1>", lambda event: self.choisitDe(event, i))
+        self.canvas.bind(
+            "<Button-1>", lambda event: self.choisitCase(event, 0))
+
+        self.base.rowconfigure(0, weight=1)
+        self.base.columnconfigure(0, weight=1)
 
         # Ajout des éléments à la fenêtre
         self.canvas.grid(column=0, row=0, rowspan=4)
@@ -90,10 +101,11 @@ class Backgammon:
         self.jouer()
 
         # Lancement de la fenêtre
-        self.base.mainloop()
+        # self.base.mainloop()
 
     def quitter(self):
         """Quitte la partie et revient au lanceur"""
+        self.applicationQuittee = True
         self.base.destroy()
         self.tableauScore.base.deiconify()
 
@@ -210,20 +222,6 @@ class Backgammon:
                 return True
         return False
 
-    def choisirCase(self, de):
-        """Vérifie que le joueur choisit une case jouable"""
-        bonneCase = False
-        while not bonneCase:
-            caseChoisie = input(
-                "Entrez le numero de case ou vous voulez jouer (-1 pour la prison)")
-            if caseChoisie not in [str(i) for i in range(-1, 24)]:
-                print("Non !")
-            elif not self.verifierDeplacement(self.prochainJoueur, de, int(caseChoisie)):
-                print("Vous n'avez pas le droit de faire ce deplacement")
-            else:
-                bonneCase = True
-        return int(caseChoisie)
-
     def choisitCase(self, event, numCase):
         if self.deChoisi != -1:
             # Un dé a été sélectionné
@@ -231,6 +229,8 @@ class Backgammon:
                 messagebox.showinfo(
                     "Déplacement impossible", "Vous n'avez pas le droit de faire ce déplacement")
             else:
+                messagebox.showinfo(
+                    "Info", "Vous avez cliqué sur la case {}".format(numCase))
                 self.deplacement(self.prochainJoueur,
                                  self.des[self.deChoisi], numCase)
                 self.desJoues[self.deChoisi] = True
@@ -239,10 +239,11 @@ class Backgammon:
     def choisitDe(self, event, numDe):
         if self.deChoisi == -1:
             self.deChoisi = numDe
+            messagebox.showinfo("Choix dé", "Vous avez choisi le dé qui vaut {}".format(
+                self.des[self.deChoisi]))
 
     def tour(self):
         """Fait le prochain tour"""
-        self.desJoues = [False, False]
         if self.prochainJoueur == 0:
             nomJoueur = "blanc"
         else:
@@ -269,20 +270,23 @@ class Backgammon:
 
     def jouer(self):
         """Lance le jeu"""
-        while not self.termine():
+        while not self.termine() and not self.applicationQuittee:
+            self.base.update()
             if self.desJoues == [True, True]:
+                self.desJoues = [False, False]
                 self.tour()
         # Partie finie
-        for i in range(2):
-            if self.aGagne(i):
-                champion = i
-        if champion == 0:
-            nomJoueur = "blanc"
-        else:
-            nomJoueur = "noir"
-        messagebox.showinfo("Le joueur {} a gagné !".format(nomJoueur))
-        self.tableauScore.vainqueur(champion, self.valeurPartie)
-        self.base.destroy
+        if not self.applicationQuittee:
+            for i in range(2):
+                if self.aGagne(i):
+                    champion = i
+            if champion == 0:
+                nomJoueur = "blanc"
+            else:
+                nomJoueur = "noir"
+            messagebox.showinfo(
+                "Bravo !", "Le joueur {} a gagné !".format(nomJoueur))
+            self.tableauScore.vainqueur(champion, self.valeurPartie)
         self.tableauScore.base.deiconify()
 
     def rafraichirAffichage(self):
