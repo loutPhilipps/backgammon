@@ -67,8 +67,8 @@ class Lanceur:
                 "Charger", "Sélectionnez une partie à charger")
         else:
             try:
-                self.chargerJeu(self.listeSauvegardes[choix[0]])
                 self.fenetreChoix.destroy()
+                self.chargerJeu(self.listeSauvegardes[choix[0]])
             except:
                 messagebox.showerror(
                     "Erreur", "Impossible de charger la partie !")
@@ -92,7 +92,7 @@ class Lanceur:
         fichier = open("sauvegardes/" + sauvegarde, "rb")
         [jeu, prison, prochainJoueur] = pickle.load(fichier)
         fichier.close()
-        self.base.destroy()
+        self.base.withdraw()
         bg.Backgammon(self, jeu, prison, prochainJoueur)
 
     def vainqueur(self, champion, valeurPartie):
