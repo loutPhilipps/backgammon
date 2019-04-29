@@ -3,7 +3,7 @@
 ## Prérequis
 
 Il vous faut Python 3, ainsi que les modules `tkinter` et `pillow`.
-Vous pouvez installer PIP en lançant `python -m pip install pillow`.
+Vous pouvez installer PIL en lançant `python -m pip install pillow` dans la ligne de commande Windows (invite de commandes).
 
 ## Lancer le projet
 

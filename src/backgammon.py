@@ -17,32 +17,42 @@ import pickle
 def plateauInitial():
     """Place les pions au départ"""
     jeu = [[] for i in range(24)]
-    for i in range(24):
-        if i%2 == 0:
-            jeu[i] = [0, 0]
-        else:
-            jeu[i] = [1, 1]
-    # jeu[0] = [1, 1]
-    # jeu[5] = [0, 0, 0, 0, 0]
-    # jeu[7] = [0, 0, 0]
-    # jeu[11] = [1, 1, 1, 1, 1]
-    # jeu[12] = [0, 0, 0, 0, 0]
-    # jeu[16] = [1, 1, 1]
-    # jeu[18] = [1, 1, 1, 1, 1]
-    # jeu[23] = [0, 0]
+    jeu[0] = [1, 1]
+    jeu[5] = [0, 0, 0, 0, 0]
+    jeu[7] = [0, 0, 0]
+    jeu[11] = [1, 1, 1, 1, 1]
+    jeu[12] = [0, 0, 0, 0, 0]
+    jeu[16] = [1, 1, 1]
+    jeu[18] = [1, 1, 1, 1, 1]
+    jeu[23] = [0, 0]
     return jeu
 
 
 class Backgammon:
-    def __init__(self, tableauScore, jeu=plateauInitial(), prison=[], prochainJoueur=random.randint(0, 1), valeurPartie=1):
+    def __init__(self, tableauScore, jeu=plateauInitial(), prison=[], prochainJoueur=-1, valeurPartie=1):
         """Création d'un jeu de backgammon"""
         self.jeu = jeu
         self.prison = prison
-        self.prochainJoueur = prochainJoueur
+        if prochainJoueur == -1:
+            self.prochainJoueur = random.randint(0, 1)
+        else:
+            self.prochainJoueur = prochainJoueur
+
+        self.casesPixels = [[] for i in range(24)]
+        for i in range(6):
+            self.casesPixels[i] = [500-40*(i+1)+1, 500 - 40*i, 0, 200]
+        for i in range(6, 12):
+            self.casesPixels[i] = [240-40*(i-5) + 1, 240-40*(i-6), 0, 200]
+        for i in range(12, 18):
+            self.casesPixels[i] = [40*(i-12), 40*(i-11) - 1, 280, 480]
+        for i in range(18, 24):
+            self.casesPixels[i] = [260 + 40*(i-18), 260*(i-17) - 1, 280, 480]
+        # case = [xmin, xmax, ymin, ymax]
 
         self.tourTermine = False
         self.desJoues = [True, True]
         self.deChoisi = -1
+        self.applicationQuittee = False
 
         # Scores
         self.valeurPartie = valeurPartie
@@ -54,6 +64,8 @@ class Backgammon:
         self.base.wm_iconbitmap("src/images/icone.ico")
         self.imagesDes = [PIL.ImageTk.PhotoImage(
             master=self.base, file="src/images/des/{}.png".format(i)) for i in range(1, 7)]
+        self.imagesPions = [[PIL.ImageTk.PhotoImage(
+            master=self.base, file="src/images/pions/{}_{}.png".format(nb, i)) for nb in range(1, 6)] for i in range(2)]
         self.canvasDes = [
             tk.Canvas(self.base, height=200, width=200) for i in range(2)]
         for de in range(2):
@@ -62,7 +74,7 @@ class Backgammon:
         self.canvas = tk.Canvas(self.base, height=500, width=500)
         self.imagePlateau = PIL.ImageTk.PhotoImage(
             master=self.base, file="src/images/plateau.png")
-        self.canvas.create_image(0, 0, anchor="nw", image=self.imagePlateau)
+        self.rafraichirAffichage()
         self.boutonReinitialiser = tk.Button(
             self.base, text="Réinitialiser", command=self.reinit)
         self.boutonSauvegarder = tk.Button(
@@ -76,9 +88,18 @@ class Backgammon:
             self.base, text=str(textScores))
         self.prisonCanvas = tk.Canvas(self.base, height=100, width=500)
 
+        self.base.protocol('WM_DELETE_WINDOW', self.quitter)
+
         # Liaison des images (dés, cases) aux événements
-        for i in range(2):
-            self.canvasDes[i].bind("<Button-1>", lambda event: self.choisitDe(event, i))
+        self.canvasDes[0].bind(
+            "<Button-1>", lambda event: self.choisitDe(event, 0))
+        self.canvasDes[1].bind(
+            "<Button-1>", lambda event: self.choisitDe(event, 1))
+        self.canvas.bind(
+            "<Button-1>", self.choisitCase)
+
+        self.base.rowconfigure(0, weight=1)
+        self.base.columnconfigure(0, weight=1)
 
         # Ajout des éléments à la fenêtre
         self.canvas.grid(column=0, row=0, rowspan=4)
@@ -94,10 +115,11 @@ class Backgammon:
         self.jouer()
 
         # Lancement de la fenêtre
-        self.base.mainloop()
+        # self.base.mainloop()
 
     def quitter(self):
         """Quitte la partie et revient au lanceur"""
+        self.applicationQuittee = True
         self.base.destroy()
         self.tableauScore.base.deiconify()
 
@@ -214,37 +236,33 @@ class Backgammon:
                 return True
         return False
 
-    def choisirCase(self, de):
-        """Vérifie que le joueur choisit une case jouable"""
-        bonneCase = False
-        while not bonneCase:
-            caseChoisie = input(
-                "Entrez le numero de case ou vous voulez jouer (-1 pour la prison)")
-            if caseChoisie not in [str(i) for i in range(-1, 24)]:
-                print("Non !")
-            elif not self.verifierDeplacement(self.prochainJoueur, de, int(caseChoisie)):
-                print("Vous n'avez pas le droit de faire ce deplacement")
-            else:
-                bonneCase = True
-        return int(caseChoisie)
-
-    def choisitCase(self, event, numCase):
-        if self.deChoisi != -1:
-            # Un dé a été sélectionné
-            if not self.verifierDeplacement(self.prochainJoueur, self.des[self.deChoisi], numCase):
-                messagebox.showinfo("Déplacement impossible", "Vous n'avez pas le droit de faire ce déplacement")
-            else:
-                self.deplacement(self.prochainJoueur, self.des[self.deChoisi], numCase)
-                self.desJoues[self.deChoisi] = True
-                self.deChoisi = -1
+    def choisitCase(self, event):
+        numCase = -1
+        for i in range(len(self.casesPixels)):
+            if event.x >= self.casesPixels[i][0] and event.x <= self.casesPixels[i][1] and event.y >= self.casesPixels[i][2] and event.y <= self.casesPixels[i][3]:
+                numCase = i
+        if numCase != -1:
+            # On a bien cliqué sur une case !
+            if self.deChoisi != -1:
+                # Un dé a été sélectionné
+                if not self.verifierDeplacement(self.prochainJoueur, self.des[self.deChoisi], numCase):
+                    messagebox.showinfo(
+                        "Déplacement impossible", "Vous n'avez pas le droit de faire ce déplacement")
+                else:
+                    messagebox.showinfo("Coup joué", "Pion déplacé !")
+                    self.deplacement(self.prochainJoueur,
+                                     self.des[self.deChoisi], numCase)
+                    self.desJoues[self.deChoisi] = True
+                    self.deChoisi = -1
 
     def choisitDe(self, event, numDe):
-        if self.deChoisi == -1:
+        if self.deChoisi == -1 and not self.desJoues[numDe]:
             self.deChoisi = numDe
+            messagebox.showinfo("Choix dé", "Vous avez choisi le dé qui vaut {}".format(
+                self.des[self.deChoisi]))
 
     def tour(self):
         """Fait le prochain tour"""
-        self.desJoues = [False, False]
         if self.prochainJoueur == 0:
             nomJoueur = "blanc"
         else:
@@ -271,22 +289,44 @@ class Backgammon:
 
     def jouer(self):
         """Lance le jeu"""
-        while not self.termine():
+        while not self.termine() and not self.applicationQuittee:
+            self.base.update()
             if self.desJoues == [True, True]:
+                self.desJoues = [False, False]
+                if self.prochainJoueur == 0:
+                    self.prochainJoueur = 1
+                else:
+                    self.prochainJoueur = 0
                 self.tour()
         # Partie finie
-        for i in range(2):
-            if self.aGagne(i):
-                champion = i
-        if champion == 0:
-            nomJoueur = "blanc"
-        else:
-            nomJoueur = "noir"
-        messagebox.showinfo("Le joueur {} a gagné !".format(nomJoueur))
-        self.tableauScore.vainqueur(champion, self.valeurPartie)
-        self.base.destroy
+        if not self.applicationQuittee:
+            for i in range(2):
+                if self.aGagne(i):
+                    champion = i
+            if champion == 0:
+                nomJoueur = "blanc"
+            else:
+                nomJoueur = "noir"
+            messagebox.showinfo(
+                "Bravo !", "Le joueur {} a gagné !".format(nomJoueur))
+            self.tableauScore.vainqueur(champion, self.valeurPartie)
         self.tableauScore.base.deiconify()
 
     def rafraichirAffichage(self):
         """Recalcule l'affichage des pions"""
-        print("")
+        self.canvas.delete("all")
+        self.canvas.create_image(0, 0, anchor="nw", image=self.imagePlateau)
+        for i in range(24):
+            for joueur in range(2):
+                if joueur in self.jeu[i]:
+                    nb = len(self.jeu[i])
+                    x = self.casesPixels[i][0]
+                    if i <= 11:
+                        myAnchor = "nw"
+                        y = self.casesPixels[i][2]
+                    else:
+                        myAnchor = "se"
+                        y = self.casesPixels[i][3]
+
+                    self.canvas.create_image(
+                        x, y, anchor=myAnchor, image=self.imagesPions[joueur][nb-1])
