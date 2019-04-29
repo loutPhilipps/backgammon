@@ -38,6 +38,18 @@ class Backgammon:
         else:
             self.prochainJoueur = prochainJoueur
 
+        self.casesPixels = [[] for i in range(24)]
+        for i in range(6):
+            self.casesPixels[i] = [40*i, 40*(i+1)-1, 0, 200]
+        for i in range(6, 12):
+            self.casesPixels[i] = [40*(i+1), 40*(i+2)-1, 0, 200]
+        for i in range(12, 18):
+            self.casesPixels[i] = [40*i, 40*(i+1)-1, 280, 480]
+        for i in range(18, 24):
+            self.casesPixels[i] = [40*(i+1), 40*(i+2)-1, 280, 480]
+            # case = [xmin, xmax, ymin, ymax]
+        # 200 de hauteur, 40 de longueur
+
         self.tourTermine = False
         self.desJoues = [True, True]
         self.deChoisi = -1
@@ -78,11 +90,12 @@ class Backgammon:
         self.base.protocol('WM_DELETE_WINDOW', self.quitter)
 
         # Liaison des images (dés, cases) aux événements
-        for i in range(2):
-            self.canvasDes[i].bind(
-                "<Button-1>", lambda event: self.choisitDe(event, i))
+        self.canvasDes[0].bind(
+            "<Button-1>", lambda event: self.choisitDe(event, 0))
+        self.canvasDes[1].bind(
+            "<Button-1>", lambda event: self.choisitDe(event, 1))
         self.canvas.bind(
-            "<Button-1>", lambda event: self.choisitCase(event, 0))
+            "<Button-1>", lambda event: self.choisitCase(event))
 
         self.base.rowconfigure(0, weight=1)
         self.base.columnconfigure(0, weight=1)
@@ -222,19 +235,25 @@ class Backgammon:
                 return True
         return False
 
-    def choisitCase(self, event, numCase):
-        if self.deChoisi != -1:
-            # Un dé a été sélectionné
-            if not self.verifierDeplacement(self.prochainJoueur, self.des[self.deChoisi], numCase):
-                messagebox.showinfo(
-                    "Déplacement impossible", "Vous n'avez pas le droit de faire ce déplacement")
-            else:
-                messagebox.showinfo(
-                    "Info", "Vous avez cliqué sur la case {}".format(numCase))
-                self.deplacement(self.prochainJoueur,
-                                 self.des[self.deChoisi], numCase)
-                self.desJoues[self.deChoisi] = True
-                self.deChoisi = -1
+    def choisitCase(self, event):
+        numCase = -1
+        for i in range(len(self.casesPixels)):
+            if event.x >= self.casesPixels[i][0] and event.x <= self.casesPixels[i][1] and event.y >= self.casesPixels[i][2] and self.casesPixels[i][3]:
+                numCase = i
+        if numCase != -1:
+            # On a bien cliqué sur une case !
+            if self.deChoisi != -1:
+                # Un dé a été sélectionné
+                if not self.verifierDeplacement(self.prochainJoueur, self.des[self.deChoisi], numCase):
+                    messagebox.showinfo(
+                        "Déplacement impossible", "Vous n'avez pas le droit de faire ce déplacement")
+                else:
+                    messagebox.showinfo(
+                        "Info", "Vous avez cliqué sur la case {}".format(numCase))
+                    self.deplacement(self.prochainJoueur,
+                                     self.des[self.deChoisi], numCase)
+                    self.desJoues[self.deChoisi] = True
+                    self.deChoisi = -1
 
     def choisitDe(self, event, numDe):
         if self.deChoisi == -1:

@@ -43,6 +43,8 @@ class Lanceur:
         self.boutonCharger.grid(column=2, row=2, columnspan=2)
         self.texte.grid(column=0, row=1, columnspan=2)
 
+        self.base.mainloop()
+
     def quitter(self):
         """Quitte"""
         messagebox.showinfo("Bye !", "Au revoir !")
@@ -52,15 +54,13 @@ class Lanceur:
         webbrowser.open_new(
             r"http://www.jeu-backgammon.net/regles-backgammon.html")
 
-    def demarrer(self):
-        self.base.mainloop()
-
     def lancerJeu(self):
         """Lance des parties tant qu'on ne quitte pas"""
         self.base.withdraw()
         bg.Backgammon(self)
 
     def lancerSauvegarde(self):
+        """Essaie de lancer la partie si la sauvegarde est correcte"""
         choix = self.choixSauvegarde.curselection()
         if choix == ():
             messagebox.showwarning(
@@ -74,6 +74,7 @@ class Lanceur:
                     "Erreur", "Impossible de charger la partie !")
 
     def chargerUnePartie(self):
+        """Demande quelle partie charger"""
         self.listeSauvegardes = os.listdir("sauvegardes")
         self.fenetreChoix = tk.Toplevel()
         self.fenetreChoix.title("Choisissez une sauvegarde")
@@ -89,6 +90,7 @@ class Lanceur:
         self.boutonQuitter.grid()
 
     def chargerJeu(self, sauvegarde):
+        """Charge une partie sauvegardée"""
         fichier = open("sauvegardes/" + sauvegarde, "rb")
         [jeu, prison, prochainJoueur] = pickle.load(fichier)
         fichier.close()
@@ -102,4 +104,5 @@ class Lanceur:
             self.score[0], self.score[1]))
 
     def montreScores(self):
+        """Renvoie les scores"""
         return self.score
