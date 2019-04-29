@@ -40,15 +40,14 @@ class Backgammon:
 
         self.casesPixels = [[] for i in range(24)]
         for i in range(6):
-            self.casesPixels[i] = [40*i, 40*(i+1)-1, 0, 200]
+            self.casesPixels[i] = [500-40*(i+1)+1, 500 - 40*i, 0, 200]
         for i in range(6, 12):
-            self.casesPixels[i] = [40*(i+1), 40*(i+2)-1, 0, 200]
+            self.casesPixels[i] = [240-40*(i-5) + 1, 240-40*(i-6), 0, 200]
         for i in range(12, 18):
-            self.casesPixels[i] = [40*i, 40*(i+1)-1, 280, 480]
+            self.casesPixels[i] = [40*(i-12), 40*(i-11) - 1, 280, 480]
         for i in range(18, 24):
-            self.casesPixels[i] = [40*(i+1), 40*(i+2)-1, 280, 480]
-            # case = [xmin, xmax, ymin, ymax]
-        # 200 de hauteur, 40 de longueur
+            self.casesPixels[i] = [260 + 40*(i-18), 260*(i-17) - 1, 280, 480]
+        # case = [xmin, xmax, ymin, ymax]
 
         self.tourTermine = False
         self.desJoues = [True, True]
@@ -65,6 +64,8 @@ class Backgammon:
         self.base.wm_iconbitmap("src/images/icone.ico")
         self.imagesDes = [PIL.ImageTk.PhotoImage(
             master=self.base, file="src/images/des/{}.png".format(i)) for i in range(1, 7)]
+        self.imagesPions = [[PIL.ImageTk.PhotoImage(
+            master=self.base, file="src/images/pions/{}_{}.png".format(nb, i)) for nb in range(1, 6)] for i in range(2)]
         self.canvasDes = [
             tk.Canvas(self.base, height=200, width=200) for i in range(2)]
         for de in range(2):
@@ -73,7 +74,7 @@ class Backgammon:
         self.canvas = tk.Canvas(self.base, height=500, width=500)
         self.imagePlateau = PIL.ImageTk.PhotoImage(
             master=self.base, file="src/images/plateau.png")
-        self.canvas.create_image(0, 0, anchor="nw", image=self.imagePlateau)
+        self.rafraichirAffichage()
         self.boutonReinitialiser = tk.Button(
             self.base, text="Réinitialiser", command=self.reinit)
         self.boutonSauvegarder = tk.Button(
@@ -95,7 +96,7 @@ class Backgammon:
         self.canvasDes[1].bind(
             "<Button-1>", lambda event: self.choisitDe(event, 1))
         self.canvas.bind(
-            "<Button-1>", lambda event: self.choisitCase(event))
+            "<Button-1>", self.choisitCase)
 
         self.base.rowconfigure(0, weight=1)
         self.base.columnconfigure(0, weight=1)
@@ -238,7 +239,7 @@ class Backgammon:
     def choisitCase(self, event):
         numCase = -1
         for i in range(len(self.casesPixels)):
-            if event.x >= self.casesPixels[i][0] and event.x <= self.casesPixels[i][1] and event.y >= self.casesPixels[i][2] and self.casesPixels[i][3]:
+            if event.x >= self.casesPixels[i][0] and event.x <= self.casesPixels[i][1] and event.y >= self.casesPixels[i][2] and event.y <= self.casesPixels[i][3]:
                 numCase = i
         if numCase != -1:
             # On a bien cliqué sur une case !
@@ -248,15 +249,14 @@ class Backgammon:
                     messagebox.showinfo(
                         "Déplacement impossible", "Vous n'avez pas le droit de faire ce déplacement")
                 else:
-                    messagebox.showinfo(
-                        "Info", "Vous avez cliqué sur la case {}".format(numCase))
+                    messagebox.showinfo("Coup joué", "Pion déplacé !")
                     self.deplacement(self.prochainJoueur,
                                      self.des[self.deChoisi], numCase)
                     self.desJoues[self.deChoisi] = True
                     self.deChoisi = -1
 
     def choisitDe(self, event, numDe):
-        if self.deChoisi == -1:
+        if self.deChoisi == -1 and not self.desJoues[numDe]:
             self.deChoisi = numDe
             messagebox.showinfo("Choix dé", "Vous avez choisi le dé qui vaut {}".format(
                 self.des[self.deChoisi]))
@@ -293,6 +293,10 @@ class Backgammon:
             self.base.update()
             if self.desJoues == [True, True]:
                 self.desJoues = [False, False]
+                if self.prochainJoueur == 0:
+                    self.prochainJoueur = 1
+                else:
+                    self.prochainJoueur = 0
                 self.tour()
         # Partie finie
         if not self.applicationQuittee:
@@ -310,4 +314,19 @@ class Backgammon:
 
     def rafraichirAffichage(self):
         """Recalcule l'affichage des pions"""
-        print("")
+        self.canvas.delete("all")
+        self.canvas.create_image(0, 0, anchor="nw", image=self.imagePlateau)
+        for i in range(24):
+            for joueur in range(2):
+                if joueur in self.jeu[i]:
+                    nb = len(self.jeu[i])
+                    x = self.casesPixels[i][0]
+                    if i <= 11:
+                        myAnchor = "nw"
+                        y = self.casesPixels[i][2]
+                    else:
+                        myAnchor = "se"
+                        y = self.casesPixels[i][3]
+
+                    self.canvas.create_image(
+                        x, y, anchor=myAnchor, image=self.imagesPions[joueur][nb-1])
