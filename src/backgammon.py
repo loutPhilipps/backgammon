@@ -46,7 +46,8 @@ class Backgammon:
         for i in range(12, 18):
             self.casesPixels[i] = [40*(i-12), 40*(i-11) - 1, 280, 480]
         for i in range(18, 24):
-            self.casesPixels[i] = [260 + 40*(i-18), 260*(i-17) - 1, 280, 480]
+            self.casesPixels[i] = [
+                260 + 40*(i-18), 260 + 260*(i-17) - 1, 280, 480]
         # case = [xmin, xmax, ymin, ymax]
 
         self.tourTermine = False
@@ -325,7 +326,7 @@ class Backgammon:
                         myAnchor = "nw"
                         y = self.casesPixels[i][2]
                     else:
-                        myAnchor = "se"
+                        myAnchor = "sw"
                         y = self.casesPixels[i][3]
 
                     self.canvas.create_image(
