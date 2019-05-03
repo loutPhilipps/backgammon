@@ -9,6 +9,7 @@
 import random
 import tkinter as tk
 import tkinter.messagebox as messagebox
+import PIL.Image
 import PIL.ImageTk
 import os
 import pickle
@@ -67,6 +68,8 @@ class Backgammon:
             master=self.base, file="src/images/des/{}.png".format(i)) for i in range(1, 7)]
         self.imagesPions = [[PIL.ImageTk.PhotoImage(
             master=self.base, file="src/images/pions/{}_{}.png".format(nb, i)) for nb in range(1, 6)] for i in range(2)]
+        self.imagesPionsPrison = [[PIL.ImageTk.PhotoImage(master=self.base, image=PIL.Image.open(
+            "src/images/pions/{}_{}.png".format(nb, i)).rotate(90, expand=True)) for nb in range(1, 6)] for i in range(2)]
         self.canvasDes = [
             tk.Canvas(self.base, height=200, width=200) for i in range(2)]
         for de in range(2):
@@ -98,6 +101,8 @@ class Backgammon:
             "<Button-1>", lambda event: self.choisitDe(event, 1))
         self.canvas.bind(
             "<Button-1>", self.choisitCase)
+        self.prisonCanvas.bind(
+            "<Button-1>", self.choisitCase, True)
 
         self.base.rowconfigure(0, weight=1)
         self.base.columnconfigure(0, weight=1)
@@ -237,24 +242,28 @@ class Backgammon:
                 return True
         return False
 
-    def choisitCase(self, event):
-        numCase = -1
-        for i in range(len(self.casesPixels)):
-            if event.x >= self.casesPixels[i][0] and event.x <= self.casesPixels[i][1] and event.y >= self.casesPixels[i][2] and event.y <= self.casesPixels[i][3]:
-                numCase = i
-        if numCase != -1:
-            # On a bien cliqué sur une case !
-            if self.deChoisi != -1:
-                # Un dé a été sélectionné
-                if not self.verifierDeplacement(self.prochainJoueur, self.des[self.deChoisi], numCase):
-                    messagebox.showinfo(
-                        "Déplacement impossible", "Vous n'avez pas le droit de faire ce déplacement")
-                else:
-                    messagebox.showinfo("Coup joué", "Pion déplacé !")
-                    self.deplacement(self.prochainJoueur,
-                                     self.des[self.deChoisi], numCase)
-                    self.desJoues[self.deChoisi] = True
-                    self.deChoisi = -1
+    def choisitCase(self, event, prison=False):
+        if not prison:
+            numCase = -1
+            for i in range(len(self.casesPixels)):
+                if event.x >= self.casesPixels[i][0] and event.x <= self.casesPixels[i][1] and event.y >= self.casesPixels[i][2] and event.y <= self.casesPixels[i][3]:
+                    numCase = i
+            if numCase != -1:
+                # On a bien cliqué sur une case !
+                if self.deChoisi != -1:
+                    # Un dé a été sélectionné
+                    if not self.verifierDeplacement(self.prochainJoueur, self.des[self.deChoisi], numCase):
+                        messagebox.showinfo(
+                            "Déplacement impossible", "Vous n'avez pas le droit de faire ce déplacement")
+                    else:
+                        self.deplacement(self.prochainJoueur,
+                                         self.des[self.deChoisi], numCase)
+                        self.desJoues[self.deChoisi] = True
+                        self.deChoisi = -1
+        else:
+            if self.prochainJoueur in self.prison:
+                self.deplacement(self.prochainJoueur,
+                                 self.des[self.deChoisi], -1)
 
     def choisitDe(self, event, numDe):
         if self.deChoisi == -1 and not self.desJoues[numDe]:
@@ -331,3 +340,7 @@ class Backgammon:
 
                     self.canvas.create_image(
                         x, y, anchor=myAnchor, image=self.imagesPions[joueur][nb-1])
+        for joueur in range(2):
+            if self.prison.count(joueur) > 0:
+                self.prisonCanvas.create_image(
+                    0, 50*joueur, anchor="nw", image=self.imagesPionsPrison[joueur][self.prison.count(joueur)-1])
