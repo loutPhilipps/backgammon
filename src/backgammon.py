@@ -48,7 +48,7 @@ class Backgammon:
             self.casesPixels[i] = [40*(i-12), 40*(i-11) - 1, 280, 480]
         for i in range(18, 24):
             self.casesPixels[i] = [
-                260 + 40*(i-18), 260 + 260*(i-17) - 1, 280, 480]
+                265 + 40*(i-18), 265 + 265*(i-17) - 1, 280, 480]
         # case = [xmin, xmax, ymin, ymax]
 
         self.tourTermine = False
