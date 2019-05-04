@@ -78,7 +78,6 @@ class Backgammon:
         self.imagePlateau = PIL.ImageTk.PhotoImage(
             master=self.base, file="src/images/plateau.png")
         self.des = (1, 1)
-        self.rafraichirAffichage()
         self.boutonReinitialiser = tk.Button(
             self.base, text="Réinitialiser", command=self.reinit)
         self.boutonSauvegarder = tk.Button(
@@ -102,7 +101,7 @@ class Backgammon:
         self.canvas.bind(
             "<Button-1>", self.choisitCase)
         self.prisonCanvas.bind(
-            "<Button-1>", self.choisitCase, True)
+            "<Button-1>", lambda event: self.choisitCase(event, True))
 
         self.base.rowconfigure(0, weight=1)
         self.base.columnconfigure(0, weight=1)
@@ -117,6 +116,7 @@ class Backgammon:
         self.boutonQuitter.grid(row=6, column=1)
         self.labelScores.grid(row=2, column=1, rowspan=2)
 
+        self.rafraichirAffichage()
         # Lancement du jeu
         self.jouer()
 
@@ -243,6 +243,8 @@ class Backgammon:
         return False
 
     def choisitCase(self, event, prison=False):
+        if self.desJoues.count(True) > 0:
+            self.deChoisi = self.desJoues.index(False)
         if not prison:
             numCase = -1
             for i in range(len(self.casesPixels)):
@@ -271,8 +273,6 @@ class Backgammon:
     def choisitDe(self, event, numDe):
         if self.deChoisi == -1 and not self.desJoues[numDe]:
             self.deChoisi = numDe
-            messagebox.showinfo("Choix dé", "Vous avez choisi le dé qui vaut {}".format(
-                self.des[self.deChoisi]))
 
     def tour(self):
         """Fait le prochain tour"""
@@ -287,7 +287,7 @@ class Backgammon:
         for de in range(2):
             self.canvasDes[de].delete("all")
             self.canvasDes[de].create_image(
-                0, 0, anchor="nw", image=self.imagesDes[self.des[de]-1])
+                50, 0, anchor="nw", image=self.imagesDes[self.des[de]-1])
         desJouables = [self.deEstJouable(
             self.prochainJoueur, de) for de in self.des]
         if desJouables == [False, False]:
@@ -329,6 +329,7 @@ class Backgammon:
     def rafraichirAffichage(self):
         """Recalcule l'affichage des pions"""
         self.canvas.delete("all")
+        self.prisonCanvas.delete("all")
         for i in range(2):
             self.canvasDes[i].delete("all")
         self.canvas.create_image(0, 0, anchor="nw", image=self.imagePlateau)
@@ -353,7 +354,7 @@ class Backgammon:
         for de in range(2):
             if self.desJoues[de]:
                 self.canvasDes[de].create_image(
-                    0, 0, anchor="nw", image=self.imagesDesGris[self.des[de]-1])
+                    50, 0, anchor="nw", image=self.imagesDesGris[self.des[de]-1])
             else:
                 self.canvasDes[de].create_image(
-                    0, 0, anchor="nw", image=self.imagesDes[self.des[de]-1])
+                    50, 0, anchor="nw", image=self.imagesDes[self.des[de]-1])
