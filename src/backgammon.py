@@ -267,6 +267,8 @@ class Backgammon:
                         self.deChoisi = -1
         else:
             if self.prochainJoueur in self.prison:
+                self.deChoisi = -1
+                self.desJoues[self.deChoisi] = True
                 self.deplacement(self.prochainJoueur,
                                  self.des[self.deChoisi], -1)
 
