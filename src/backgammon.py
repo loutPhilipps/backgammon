@@ -253,6 +253,7 @@ class Backgammon:
                 if self.deChoisi != -1:
                     # Un dé a été sélectionné
                     if not self.prochainJoueur in self.jeu[numCase]:
+                        # On ne fait rien si le joueur clique sur une case qui ne lui appartient pas
                         pass
                     elif not self.verifierDeplacement(self.prochainJoueur, self.des[self.deChoisi], numCase):
                         messagebox.showinfo(
